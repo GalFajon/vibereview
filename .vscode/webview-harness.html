@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!-- Dev-only harness: renders media/review.js in a browser with a fake VS Code API and dark theme. -->
+<style>
+  :root {
+    --vscode-foreground: #cccccc; --vscode-editor-background: #1e1e1e; --vscode-sideBar-background: #252526;
+    --vscode-descriptionForeground: #9d9d9d; --vscode-font-family: 'Segoe UI', sans-serif; --vscode-font-size: 13px;
+    --vscode-editor-font-family: Consolas, monospace; --vscode-button-background: #0e639c; --vscode-button-foreground: #fff;
+    --vscode-button-hoverBackground: #1177bb; --vscode-button-secondaryBackground: #3a3d41; --vscode-button-secondaryForeground: #fff;
+    --vscode-list-hoverBackground: #2a2d2e; --vscode-list-inactiveSelectionBackground: #37373d; --vscode-list-activeSelectionBackground: #04395e;
+    --vscode-focusBorder: #007fd4; --vscode-widget-border: #3c3c3c; --vscode-toolbar-hoverBackground: rgba(90,93,94,.31);
+  }
+  body { width: 360px; height: 720px; border-right: 1px solid #444; }
+</style>
+<link rel="stylesheet" href="../media/review.css">
+</head>
+<body tabindex="0">
+<div id="root"></div>
+<script>
+  window.sent = []
+  window.acquireVsCodeApi = () => ({ postMessage: (m) => window.sent.push(m) })
+  const hunk = (index, line, base, cur) => ({ index, line, curStart: line - 1, baseStart: line - 1, added: cur.length, removed: base.length,
+    snippet: [...cur, ...base].find((l) => l.trim())?.trim() ?? '', preview: { lines: [...base.map((s) => ({ k: '-', s })), ...cur.map((s) => ({ k: '+', s }))], more: 0 } })
+  window.mockState = { type: 'state', active: true, decided: 2, files: [
+    { rel: 'frontend/src/constants/pipeStyle.js', name: 'pipeStyle.js', dir: 'frontend/src/constants', kind: 'modified', added: 5, removed: 2, hunks: [
+      hunk(0, 32, ['export const POINT_ERROR_RADIUS = 7'], ['export const POINT_ERROR_RADIUS = 9']),
+      hunk(1, 75, ["  PVC: '#7c3aed', // violet"], ["  PVC: '#6d28d9', // darker violet"]),
+      hunk(2, 129, [], ['', '// VibeReview test: slope above which a pipe is flagged as steep in tooltips.', 'export const STEEP_SLOPE_PERCENT = 3.0']) ] },
+    { rel: 'frontend/src/constants/vibereviewTest.js', name: 'vibereviewTest.js', dir: 'frontend/src/constants', kind: 'added', added: 2, removed: 0, hunks: [
+      hunk(3, 1, [], ['// VibeReview test file: reject it to send it to the trash, or approve it to keep it.', 'export const VIBEREVIEW_TEST = true']) ] },
+  ] }
+</script>
+<script src="../media/review.js"></script>
+<script>window.postMessage(window.mockState, '*')</script>
+</body>
+</html>

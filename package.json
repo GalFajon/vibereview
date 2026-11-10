@@ -1,0 +1,121 @@
+{
+  "name": "vibereview",
+  "displayName": "VibeReview",
+  "description": "Review AI agent edits hunk by hunk and approve or reject each one, independent of git.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GalFajon/vibereview.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onWebviewPanel:vibereview.review"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "contributes": {
+    "commands": [
+      { "command": "vibereview.open", "title": "Open Review", "category": "VibeReview", "icon": "$(layout-sidebar-left)" },
+      { "command": "vibereview.start", "title": "Start Review Session (snapshot baseline)", "category": "VibeReview", "icon": "$(play)" },
+      { "command": "vibereview.stop", "title": "Stop Review Session", "category": "VibeReview", "icon": "$(debug-stop)" },
+      { "command": "vibereview.refresh", "title": "Refresh", "category": "VibeReview", "icon": "$(refresh)" },
+      { "command": "vibereview.approve", "title": "Approve Hunk", "category": "VibeReview", "icon": "$(check)" },
+      { "command": "vibereview.reject", "title": "Reject Hunk", "category": "VibeReview", "icon": "$(discard)" },
+      { "command": "vibereview.approveFile", "title": "Approve File", "category": "VibeReview", "icon": "$(check)" },
+      { "command": "vibereview.rejectFile", "title": "Reject File", "category": "VibeReview", "icon": "$(discard)" },
+      { "command": "vibereview.approveAll", "title": "Approve All", "category": "VibeReview", "icon": "$(check-all)" },
+      { "command": "vibereview.rejectAll", "title": "Reject All", "category": "VibeReview", "icon": "$(close-all)" },
+      { "command": "vibereview.next", "title": "Next Hunk", "category": "VibeReview", "icon": "$(arrow-down)" },
+      { "command": "vibereview.prev", "title": "Previous Hunk", "category": "VibeReview", "icon": "$(arrow-up)" },
+      { "command": "vibereview.openDiff", "title": "Open Diff", "category": "VibeReview", "icon": "$(diff)" },
+      { "command": "vibereview.reveal", "title": "Reveal Hunk", "category": "VibeReview" }
+    ],
+    "views": {
+      "scm": [
+        { "id": "vibereview.changes", "name": "VibeReview" }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "vibereview.changes",
+        "contents": "Snapshot the workspace, then let your agent work. Every change it makes shows up here for approval.\n[Start Review Session](command:vibereview.start)",
+        "when": "!vibereview.active"
+      },
+      {
+        "view": "vibereview.changes",
+        "contents": "No pending changes. Agent edits will appear here.",
+        "when": "vibereview.active"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "vibereview.open", "when": "view == vibereview.changes && vibereview.active", "group": "navigation@0" },
+        { "command": "vibereview.next", "when": "view == vibereview.changes && vibereview.hasChanges", "group": "navigation@1" },
+        { "command": "vibereview.approveAll", "when": "view == vibereview.changes && vibereview.hasChanges", "group": "navigation@2" },
+        { "command": "vibereview.rejectAll", "when": "view == vibereview.changes && vibereview.hasChanges", "group": "navigation@3" },
+        { "command": "vibereview.refresh", "when": "view == vibereview.changes && vibereview.active", "group": "navigation@4" },
+        { "command": "vibereview.start", "when": "view == vibereview.changes", "group": "session@1" },
+        { "command": "vibereview.stop", "when": "view == vibereview.changes && vibereview.active", "group": "session@2" }
+      ],
+      "view/item/context": [
+        { "command": "vibereview.approve", "when": "view == vibereview.changes && viewItem == hunk", "group": "inline@1" },
+        { "command": "vibereview.reject", "when": "view == vibereview.changes && viewItem == hunk", "group": "inline@2" },
+        { "command": "vibereview.openDiff", "when": "view == vibereview.changes && viewItem == file", "group": "inline@0" },
+        { "command": "vibereview.approveFile", "when": "view == vibereview.changes && viewItem == file", "group": "inline@1" },
+        { "command": "vibereview.rejectFile", "when": "view == vibereview.changes && viewItem == file", "group": "inline@2" }
+      ],
+      "commandPalette": [
+        { "command": "vibereview.reveal", "when": "false" },
+        { "command": "vibereview.approve", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.reject", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.approveFile", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.rejectFile", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.approveAll", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.rejectAll", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.next", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.prev", "when": "vibereview.hasChanges" },
+        { "command": "vibereview.stop", "when": "vibereview.active" }
+      ]
+    },
+    "keybindings": [
+      { "command": "vibereview.open", "key": "ctrl+alt+r", "mac": "cmd+alt+r" },
+      { "command": "vibereview.next", "key": "alt+j", "when": "vibereview.hasChanges" },
+      { "command": "vibereview.prev", "key": "alt+k", "when": "vibereview.hasChanges" },
+      { "command": "vibereview.approve", "key": "alt+y", "when": "vibereview.hasChanges && editorTextFocus" },
+      { "command": "vibereview.reject", "key": "alt+n", "when": "vibereview.hasChanges && editorTextFocus" },
+      { "command": "vibereview.openDiff", "key": "alt+d", "when": "vibereview.active && editorTextFocus" }
+    ],
+    "configuration": {
+      "title": "VibeReview",
+      "properties": {
+        "vibereview.excludeDirs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["node_modules", ".git", ".vibereview", "dist", "build", "out", ".next", "coverage", ".venv", "venv", "__pycache__", ".turbo", ".cache"],
+          "description": "Folder names that are never tracked (matched against every path segment)."
+        },
+        "vibereview.autoOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the review layout automatically when new pending changes appear."
+        },
+        "vibereview.maxFileSizeKB": {
+          "type": "number",
+          "default": 1024,
+          "description": "Files larger than this are not tracked."
+        }
+      }
+    }
+  }
+}
